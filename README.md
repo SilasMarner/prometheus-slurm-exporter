@@ -133,6 +133,13 @@ Collect _share_ statistics for every Slurm account. Refer to the [manpage of the
 
 ## Installation
 
+* Download the source for the latest release, **[0.22](https://github.com/SilasMarner/prometheus-slurm-exporter/releases/tag/0.22)** (requires Slurm 23.02+, see the minimum version note above), or clone `master` for the latest development version:
+
+  ```bash
+  git clone --branch 0.22 https://github.com/SilasMarner/prometheus-slurm-exporter.git
+  cd prometheus-slurm-exporter
+  ```
+
 * Read [DEVELOPMENT.md](DEVELOPMENT.md) in order to build the Prometheus Slurm Exporter. After a successful build copy the executable
 `bin/prometheus-slurm-exporter` to a node with access to the Slurm command-line interface.
 
