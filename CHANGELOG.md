@@ -2,6 +2,12 @@
 
 Full commit history per tag: https://github.com/vpenso/prometheus-slurm-exporter/commits/{tag number}
 
+* **0.20**
+  - Migrate sinfo/squeue/sacct-based collectors from hand-parsed positional text output to `--json`, fixing the output-format-drift bug tracked as issue #38. Minimum supported Slurm version is now 23.02.
+  - Rewrite GPU/GRES accounting (`gpus.go`) to correctly parse typed GRES entries (`gpu:<type>:<count>`), fixing silent zero-counting on any GRES beyond the untyped legacy form. `slurm_gpus_{alloc,idle,total,utilization}` now carry a `gpu_type` label.
+  - Add an optional AMD ROCm GPU telemetry collector (`-rocm-acct`, `-rocm-smi-cmd`) exposing real device utilization/memory/temperature/power via `amd-smi`/`rocm-smi`, as `slurm_rocm_gpu_*` metrics separate from the GRES-based scheduling metrics.
+  - `sdiag`/`sshare`-based collectors (scheduler, fair-share) remain on legacy text parsing (documented in-code), and go.mod's Go version floor is bumped from 1.12 to 1.21.
+
 * **0.19**
   - Merge PR#50
 
