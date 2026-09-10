@@ -26,13 +26,14 @@ import (
 // each other differing only in which job field they grouped by.
 type JobMetrics struct {
 	pending      float64
+	pending_cpus float64
 	running      float64
 	running_cpus float64
 	suspended    float64
 }
 
 // aggregateJobsByKey groups squeue jobs by keyFn(job) and tallies
-// pending/running/suspended counts (plus running CPUs) per key.
+// pending/running/suspended counts (plus pending/running CPUs) per key.
 func aggregateJobsByKey(squeue *slurmcli.SqueueResponse, keyFn func(slurmcli.SqueueJob) string) map[string]*JobMetrics {
 	out := make(map[string]*JobMetrics)
 	for _, j := range squeue.Jobs {
@@ -46,6 +47,7 @@ func aggregateJobsByKey(squeue *slurmcli.SqueueResponse, keyFn func(slurmcli.Squ
 		switch strings.ToLower(j.State()) {
 		case "pending":
 			out[key].pending++
+			out[key].pending_cpus += float64(j.CPUs)
 		case "running":
 			out[key].running++
 			out[key].running_cpus += float64(j.CPUs)

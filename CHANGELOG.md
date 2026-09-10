@@ -2,6 +2,10 @@
 
 Full commit history per tag: https://github.com/vpenso/prometheus-slurm-exporter/commits/{tag number}
 
+* **0.21**
+  - Add `slurm_account_cpus_pending` / `slurm_user_cpus_pending` metrics (pending CPUs per account/user, alongside the existing pending/running/suspended job counts). Ported from the `development` branch's pre-0.20 work, reapplied on top of the JSON-based `accounts.go`/`users.go`.
+  - Fix `internal/slurmcli.ParseGresString` to correctly handle Slurm's `gpu:(null):N` GRES form (literal placeholder for "no GPU type configured") - the previous trailing-annotation stripping cut the string at the first `(`, which truncated this case since `(null)` itself contains a `(`.
+
 * **0.20**
   - Migrate sinfo/squeue/sacct-based collectors from hand-parsed positional text output to `--json`, fixing the output-format-drift bug tracked as issue #38. Minimum supported Slurm version is now 23.02.
   - Rewrite GPU/GRES accounting (`gpus.go`) to correctly parse typed GRES entries (`gpu:<type>:<count>`), fixing silent zero-counting on any GRES beyond the untyped legacy form. `slurm_gpus_{alloc,idle,total,utilization}` now carry a `gpu_type` label.

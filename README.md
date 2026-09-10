@@ -100,7 +100,9 @@ See the related [test data](test_data/sinfo.json) to check the format of the inf
 The following information about jobs are also extracted via [squeue](https://slurm.schedmd.com/squeue.html):
 
 * **Running/Pending/Suspended** jobs per SLURM Account.
+* **Running/Pending** CPUs per SLURM Account.
 * **Running/Pending/Suspended** jobs per SLURM User.
+* **Running/Pending** CPUs per SLURM User.
 
 ### Scheduler Information
 

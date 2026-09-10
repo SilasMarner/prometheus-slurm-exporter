@@ -14,10 +14,12 @@ type GresEntry struct {
 }
 
 // ParseGresString parses a Slurm GRES descriptor string such as
-// "gpu:mi250:8,gpu:mi300x:2(IDX:0-1)" or the untyped legacy form "gpu:2"
-// into individual entries. It is vendor-agnostic: AMD/ROCm and NVIDIA GPUs
-// are both represented by Slurm as "gpu:<type>:<count>" GRES entries, only
-// the type token differs (e.g. "mi250" vs "a100").
+// "gpu:mi250:8,gpu:mi300x:2(IDX:0-1)", "gpu:(null):3(IDX:0-7)" (Slurm's
+// literal placeholder when no GPU type is configured), or the untyped
+// legacy form "gpu:2" into individual entries. It is vendor-agnostic:
+// AMD/ROCm and NVIDIA GPUs are both represented by Slurm as
+// "gpu:<type>:<count>" GRES entries, only the type token differs (e.g.
+// "mi250" vs "a100").
 //
 // This replaces the historical bug where the exporter assumed GRES always
 // had exactly the untyped two-field form and blindly parsed everything
@@ -35,9 +37,15 @@ func ParseGresString(s string) []GresEntry {
 		if raw == "" {
 			continue
 		}
-		// Drop any trailing socket/index annotation, e.g. "(IDX:0-2)" or "(S:0-1)".
-		if idx := strings.Index(raw, "("); idx >= 0 {
-			raw = raw[:idx]
+		// Drop a trailing socket/index annotation, e.g. "(IDX:0-2)" or
+		// "(S:0-1)". Only strip a "(...)" group anchored at the end of the
+		// string - the type field itself can legitimately be the literal
+		// "(null)" (Slurm's placeholder for "no GPU type configured"), so a
+		// naive "cut at the first '('" would truncate that case.
+		if strings.HasSuffix(raw, ")") {
+			if idx := strings.LastIndex(raw, "("); idx >= 0 {
+				raw = raw[:idx]
+			}
 		}
 
 		parts := strings.Split(raw, ":")
@@ -45,6 +53,9 @@ func ParseGresString(s string) []GresEntry {
 		switch len(parts) {
 		case 3: // kind:type:count
 			e.Kind, e.Type = parts[0], parts[1]
+			if e.Type == "(null)" {
+				e.Type = ""
+			}
 			e.Count, _ = strconv.ParseInt(parts[2], 10, 64)
 		case 2: // kind:count (untyped, legacy)
 			e.Kind = parts[0]
