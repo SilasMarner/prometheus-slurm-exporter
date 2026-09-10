@@ -28,6 +28,7 @@ func ParseUsersMetrics(squeue *slurmcli.SqueueResponse) map[string]*JobMetrics {
 
 type UsersCollector struct {
 	pending      *prometheus.Desc
+	pending_cpus *prometheus.Desc
 	running      *prometheus.Desc
 	running_cpus *prometheus.Desc
 	suspended    *prometheus.Desc
@@ -37,6 +38,7 @@ func NewUsersCollector() *UsersCollector {
 	labels := []string{"user"}
 	return &UsersCollector{
 		pending:      prometheus.NewDesc("slurm_user_jobs_pending", "Pending jobs for user", labels, nil),
+		pending_cpus: prometheus.NewDesc("slurm_user_cpus_pending", "Pending cpus for user", labels, nil),
 		running:      prometheus.NewDesc("slurm_user_jobs_running", "Running jobs for user", labels, nil),
 		running_cpus: prometheus.NewDesc("slurm_user_cpus_running", "Running cpus for user", labels, nil),
 		suspended:    prometheus.NewDesc("slurm_user_jobs_suspended", "Suspended jobs for user", labels, nil),
@@ -45,6 +47,7 @@ func NewUsersCollector() *UsersCollector {
 
 func (uc *UsersCollector) Describe(ch chan<- *prometheus.Desc) {
 	ch <- uc.pending
+	ch <- uc.pending_cpus
 	ch <- uc.running
 	ch <- uc.running_cpus
 	ch <- uc.suspended
@@ -60,6 +63,9 @@ func (uc *UsersCollector) Collect(ch chan<- prometheus.Metric) {
 	for u := range um {
 		if um[u].pending > 0 {
 			ch <- prometheus.MustNewConstMetric(uc.pending, prometheus.GaugeValue, um[u].pending, u)
+		}
+		if um[u].pending_cpus > 0 {
+			ch <- prometheus.MustNewConstMetric(uc.pending_cpus, prometheus.GaugeValue, um[u].pending_cpus, u)
 		}
 		if um[u].running > 0 {
 			ch <- prometheus.MustNewConstMetric(uc.running, prometheus.GaugeValue, um[u].running, u)

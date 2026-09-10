@@ -26,8 +26,9 @@ import (
 func TestParseAccountsMetrics(t *testing.T) {
 	am := ParseAccountsMetrics(loadSqueueFixture(t))
 
-	// physics: 101 pending, 102 pending, 105 cancelled (ignored)
+	// physics: 101 pending (4 cpus), 102 pending (8 cpus), 105 cancelled (ignored)
 	assert.Equal(t, 2.0, am["physics"].pending)
+	assert.Equal(t, 12.0, am["physics"].pending_cpus)
 	assert.Equal(t, 0.0, am["physics"].running)
 
 	// chemistry: 103 running (16 cpus), 104 suspended
@@ -39,13 +40,15 @@ func TestParseAccountsMetrics(t *testing.T) {
 func TestParseUsersMetrics(t *testing.T) {
 	um := ParseUsersMetrics(loadSqueueFixture(t))
 
-	// alice: 101 pending, 103 running (16 cpus)
+	// alice: 101 pending (4 cpus), 103 running (16 cpus)
 	assert.Equal(t, 1.0, um["alice"].pending)
+	assert.Equal(t, 4.0, um["alice"].pending_cpus)
 	assert.Equal(t, 1.0, um["alice"].running)
 	assert.Equal(t, 16.0, um["alice"].running_cpus)
 
-	// bob: 102 pending, 105 cancelled (ignored)
+	// bob: 102 pending (8 cpus), 105 cancelled (ignored)
 	assert.Equal(t, 1.0, um["bob"].pending)
+	assert.Equal(t, 8.0, um["bob"].pending_cpus)
 }
 
 func TestAggregateJobsByKeySkipsEmptyKey(t *testing.T) {
