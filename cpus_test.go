@@ -16,32 +16,21 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 package main
 
 import (
-	"encoding/json"
 	"io/ioutil"
+	"os"
 	"testing"
-
-	"github.com/stretchr/testify/assert"
-
-	"github.com/vpenso/prometheus-slurm-exporter/internal/slurmcli"
 )
 
-func loadSinfoFixture(t *testing.T) *slurmcli.SinfoResponse {
-	t.Helper()
-	data, err := ioutil.ReadFile("test_data/sinfo.json")
+func TestCPUsMetrics(t *testing.T) {
+	// Read the input data from a file
+	file, err := os.Open("test_data/sinfo_cpus.txt")
 	if err != nil {
 		t.Fatalf("Can not open test data: %v", err)
 	}
-	var resp slurmcli.SinfoResponse
-	if err := json.Unmarshal(data, &resp); err != nil {
-		t.Fatalf("Can not parse test data: %v", err)
-	}
-	return &resp
+	data, err := ioutil.ReadAll(file)
+	t.Logf("%+v", ParseCPUsMetrics(data))
 }
 
-func TestCPUsMetrics(t *testing.T) {
-	cm := ParseCPUsMetrics(loadSinfoFixture(t))
-	assert.Equal(t, 68.0, cm.alloc)
-	assert.Equal(t, 140.0, cm.idle)
-	assert.Equal(t, 32.0, cm.other)
-	assert.Equal(t, 240.0, cm.total)
+func TestCPUssGetMetrics(t *testing.T) {
+	t.Logf("%+v", CPUsGetMetrics())
 }

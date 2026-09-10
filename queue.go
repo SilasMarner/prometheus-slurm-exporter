@@ -17,9 +17,10 @@ package main
 
 import (
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/common/log"
-
-	"github.com/vpenso/prometheus-slurm-exporter/internal/slurmcli"
+	"io/ioutil"
+	"log"
+	"os/exec"
+	"strings"
 )
 
 type QueueMetrics struct {
@@ -39,46 +40,63 @@ type QueueMetrics struct {
 
 // Returns the scheduler metrics
 func QueueGetMetrics() *QueueMetrics {
-	squeue, err := SqueueData()
-	if err != nil {
-		log.Errorf("queue: %v", err)
-		return &QueueMetrics{}
-	}
-	return ParseQueueMetrics(squeue)
+	return ParseQueueMetrics(QueueData())
 }
 
-func ParseQueueMetrics(squeue *slurmcli.SqueueResponse) *QueueMetrics {
+func ParseQueueMetrics(input []byte) *QueueMetrics {
 	var qm QueueMetrics
-	for _, j := range squeue.Jobs {
-		switch j.State() {
-		case "PENDING":
-			qm.pending++
-			if j.StateReason == "Dependency" {
-				qm.pending_dep++
+	lines := strings.Split(string(input), "\n")
+	for _, line := range lines {
+		if strings.Contains(line, ",") {
+			splitted := strings.Split(line, ",")
+			state := splitted[1]
+			switch state {
+			case "PENDING":
+				qm.pending++
+				if len(splitted) > 2 && splitted[2] == "Dependency" {
+					qm.pending_dep++
+				}
+			case "RUNNING":
+				qm.running++
+			case "SUSPENDED":
+				qm.suspended++
+			case "CANCELLED":
+				qm.cancelled++
+			case "COMPLETING":
+				qm.completing++
+			case "COMPLETED":
+				qm.completed++
+			case "CONFIGURING":
+				qm.configuring++
+			case "FAILED":
+				qm.failed++
+			case "TIMEOUT":
+				qm.timeout++
+			case "PREEMPTED":
+				qm.preempted++
+			case "NODE_FAIL":
+				qm.node_fail++
 			}
-		case "RUNNING":
-			qm.running++
-		case "SUSPENDED":
-			qm.suspended++
-		case "CANCELLED":
-			qm.cancelled++
-		case "COMPLETING":
-			qm.completing++
-		case "COMPLETED":
-			qm.completed++
-		case "CONFIGURING":
-			qm.configuring++
-		case "FAILED":
-			qm.failed++
-		case "TIMEOUT":
-			qm.timeout++
-		case "PREEMPTED":
-			qm.preempted++
-		case "NODE_FAIL":
-			qm.node_fail++
 		}
 	}
 	return &qm
+}
+
+// Execute the squeue command and return its output
+func QueueData() []byte {
+	cmd := exec.Command("squeue", "-a", "-r", "-h", "-o %A,%T,%r", "--states=all")
+	stdout, err := cmd.StdoutPipe()
+	if err != nil {
+		log.Fatal(err)
+	}
+	if err := cmd.Start(); err != nil {
+		log.Fatal(err)
+	}
+	out, _ := ioutil.ReadAll(stdout)
+	if err := cmd.Wait(); err != nil {
+		log.Fatal(err)
+	}
+	return out
 }
 
 /*

@@ -31,8 +31,6 @@ func TestSchedulerMetrics(t *testing.T) {
 	t.Logf("%+v", ParseSchedulerMetrics(data))
 }
 
-// Note: SchedulerGetMetrics (and the equivalent *GetMetrics funcs on the
-// other collectors) shell out to a real Slurm CLI binary and are not
-// exercised by the unit test suite, which runs against fixtures under
-// test_data/ instead. Verify those end-to-end against a live cluster per
-// the README's manual verification steps.
+func TestSchedulerGetMetrics(t *testing.T) {
+	t.Logf("%+v", SchedulerGetMetrics())
+}
